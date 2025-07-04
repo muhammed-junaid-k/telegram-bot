@@ -1,5 +1,5 @@
 import os
-import fitz  # PyMuPDF
+from pdf2image import convert_from_path
 import shutil
 import logging
 import re
@@ -11,7 +11,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, Con
 from telegram.error import TimedOut
 
 # === CONFIG ===
-BOT_TOKEN = "7869425471:AAE7si4u_4jDqWRJPJ_VZwoO_wIC5pHK8_0" 
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 # === Logging ===
 logging.basicConfig(level=logging.INFO)
@@ -19,20 +19,18 @@ logging.basicConfig(level=logging.INFO)
 # === Convert PDF to JPEG Images ===
 def convert_pdf_to_images(pdf_path, output_folder="images"):
     os.makedirs(output_folder, exist_ok=True)
-    doc = fitz.open(pdf_path)
 
-    for page_num in range(len(doc)):
-        page = doc.load_page(page_num)
-        mat = fitz.Matrix(2, 2) 
-        pix = page.get_pixmap(matrix=mat, alpha=False)
+    # Convert PDF pages to PIL images (at 150 DPI to balance quality/size)
+    images = convert_from_path(pdf_path, dpi=150)
 
-        image_path = os.path.join(output_folder, f"page_{page_num+1}.jpg")
-        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+    for idx, img in enumerate(images, start=1):
+        # Resize image to reduce size (optional)
+        width, height = img.size
+        img = img.resize((int(width * 0.7), int(height * 0.7)))
 
-        # Optional resize to reduce image size and speed up Word creation
-        img = img.resize((int(pix.width * 0.7), int(pix.height * 0.7)))
+        # Save the image
+        image_path = os.path.join(output_folder, f"page_{idx}.jpg")
         img.save(image_path, "JPEG", quality=75, optimize=True)
-    doc.close()
 
 # === Add Images to Word Document ===
 def create_word_from_images(image_folder, output_file):

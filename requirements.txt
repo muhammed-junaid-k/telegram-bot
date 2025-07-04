@@ -1,4 +1,4 @@
-python-telegram-bot==20.6
+pdf2image
+pillow
 python-docx
-Pillow
-PyMuPDF
+python-telegram-bot==20.7
