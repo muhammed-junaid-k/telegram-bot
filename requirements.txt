@@ -1,4 +1,4 @@
-pdf2image
-pillow
+python-telegram-bot==20.6
 python-docx
-python-telegram-bot==20.7
+Pillow
+pdf2image

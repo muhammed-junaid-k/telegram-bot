@@ -10,29 +10,22 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 from telegram.error import TimedOut
 
-# === CONFIG ===
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-
 # === Logging ===
 logging.basicConfig(level=logging.INFO)
+
+# === Telegram Bot Token from ENV ===
+BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
 # === Convert PDF to JPEG Images ===
 def convert_pdf_to_images(pdf_path, output_folder="images"):
     os.makedirs(output_folder, exist_ok=True)
-
-    # Convert PDF pages to PIL images (at 150 DPI to balance quality/size)
     images = convert_from_path(pdf_path, dpi=150)
-
     for idx, img in enumerate(images, start=1):
-        # Resize image to reduce size (optional)
         width, height = img.size
         img = img.resize((int(width * 0.7), int(height * 0.7)))
-
-        # Save the image
         image_path = os.path.join(output_folder, f"page_{idx}.jpg")
         img.save(image_path, "JPEG", quality=75, optimize=True)
 
-# === Add Images to Word Document ===
 def create_word_from_images(image_folder, output_file):
     def natural_sort_key(s):
         return [int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', s)]
@@ -44,7 +37,6 @@ def create_word_from_images(image_folder, output_file):
             doc.add_page_break()
     doc.save(output_file)
 
-# === Generate Unique Output Filename ===
 def create_unique_filename(pdf_filename):
     base = re.sub(r"\.pdf$", "", pdf_filename, flags=re.IGNORECASE)
     filename = f"{base}_converted.docx"
@@ -54,7 +46,6 @@ def create_unique_filename(pdf_filename):
         count += 1
     return filename
 
-# === Telegram Handlers ===
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("📥 Send me a PDF and I’ll convert it to a Word file with each page as an image.")
 
@@ -90,7 +81,6 @@ async def handle_pdf(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except:
             pass
 
-# === Run the Bot ===
 def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
